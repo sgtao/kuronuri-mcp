@@ -29,14 +29,14 @@ cd kuronuri-mcp/
 
 # CPU版PyTorchを先に入れる（GPU不要、~200MB）
 pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install kuronuri "mcp[cli]"
+pip install "mcp[cli]" kuronuri
 ```
 
 uv の場合：
 
 ```bash
 uv add torch  # pyproject.toml の pytorch-cpu index を参照
-uv add kuronuri mcp
+uv add "mcp[cli]" kuronuri
 ```
 
 ### 2. 動作確認
@@ -44,6 +44,10 @@ uv add kuronuri mcp
 ```bash
 # MCPのdev toolで試す
 mcp dev server.py
+
+# uv 経由の場合（venv 不要）
+uv sync
+uv run mcp dev server.py
 ```
 
 ### 3. Claude Code への登録
