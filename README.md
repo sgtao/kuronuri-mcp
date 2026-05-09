@@ -1,68 +1,116 @@
 # kuronuri-mcp
-kuronuri スキル — セットアップ & 使い方ガイド
+
+Claude会話内でkuronuriによるPIIマスキングをリアルタイム実行するMCPサーバー＋スキル。
+
+---
 
 ## ディレクトリ構成
 
 ```
 kuronuri-mcp/
-├── SKILL.md                    ← スキル本体（必須）
+├── SKILL.md                    ← Claudeスキル本体（必須）
+├── server.py                   ← MCPサーバー（ツール定義）
+├── pyproject.toml              ← 依存管理
 ├── references/
-│   └── architecture.md        ← コード設計の詳細解説（スキルから参照）
+│   └── architecture.md        ← コード設計の詳細解説
 ├── evals/
-│   └── test-cases.md          ← 動作確認用テストケース
-└── README.md                  ← このファイル
+│   └── test-cases.md          ← 動作確認テストケース（R系3件＋C系9件）
+└── README.md                   ← このファイル
 ```
 
 ---
 
-## インストール方法
+## セットアップ手順
 
-### Claude Code でのインストール
+### 1. 依存インストール
 
 ```bash
-# ローカルスコープ（現在のプロジェクトのみ）
-claude mcp add --scope local /path/to/kuronuri-mcp
+cd kuronuri-mcp/
 
-# ユーザースコープ（全プロジェクトで使える）
-claude mcp add --scope user /path/to/kuronuri-mcp
+# CPU版PyTorchを先に入れる（GPU不要、~200MB）
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install kuronuri "mcp[cli]"
 ```
 
-### claude.ai スキルとして登録
+uv の場合：
 
-1. `kuronuri-mcp/` フォルダごと所定のスキルディレクトリに配置
-2. `SKILL.md` の frontmatter `name` が `kuronuri` であることを確認
+```bash
+uv add torch  # pyproject.toml の pytorch-cpu index を参照
+uv add kuronuri mcp
+```
+
+### 2. 動作確認
+
+```bash
+# MCPのdev toolで試す
+mcp dev server.py
+```
+
+### 3. Claude Code への登録
+
+```bash
+# プロジェクトローカル
+claude mcp add kuronuri -- python /path/to/kuronuri-mcp/server.py
+
+# 登録確認
+claude mcp list
+```
+
+### 4. Claude Desktop（claude_mcp_config.json）への登録
+
+`~/.claude/claude_mcp_config.json` に追記：
+
+```json
+{
+  "mcpServers": {
+    "kuronuri": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory", "/absolute/path/to/kuronuri-mcp",
+        "python",
+        "server.py"
+      ]
+    }
+  }
+}
+```
 
 ---
 
-## トリガーフレーズ（発火条件）
+## 提供ツール
 
-以下のフレーズを含む入力で自動的にこのスキルが使われる：
+### `mask_text`
 
-- 「kuronuriを使いたい」
-- 「PIIをマスキングしたい」
-- 「個人情報を黒塗りしたい」
-- 「LLMに渡す前に個人情報を消したい」
-- 「匿名化処理を実装したい」
-- 「NERでエンティティを検出したい」
+| パラメータ | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `text` | str | 必須 | マスク対象テキスト |
+| `lang` | str | `"en"` | `"en"` または `"ja"` |
+| `strategy` | str | `"block"` | `"block"` / `"label"` / `"fixed"` |
+| `mask_tags` | list[str] | null | 指定タグのみマスク（nullでデフォルト） |
+| `fixed_char` | str | `"█"` | fixed戦略の置換文字 |
+| `fixed_length` | int | `3` | fixed戦略の文字数 |
+
+### `list_ner_tags`
+
+| パラメータ | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `lang` | str | `"en"` | `"en"` または `"ja"` |
 
 ---
 
-## 動作確認
+## スキルのモード
 
-`evals/test-cases.md` のテストケースを順に試して、期待動作と照合する。
+| モード | 条件 | 動作 |
+|---|---|---|
+| リアルタイム実行 | MCPサーバー接続済み | 会話内で即マスク実行 |
+| コード生成 | MCPサーバー未接続 | Python/CLIコード・設計解説を生成 |
 
 ---
 
-## カスタマイズポイント
+## 注意事項
 
-### 対応モデルを追加したい場合
-
-`SKILL.md` の「タグ・モデルリファレンス」セクションに新モデルのタグ表を追記する。
-
-### 新しいユースケースブランチを追加したい場合
-
-`SKILL.md` の「ステップ2：ブランチ別対応」に新セクション（例：`F. バッチ処理ブランチ`）を追加する。
-
-### アーキテクチャ解説を深めたい場合
-
-`references/architecture.md` に解説を追記し、`SKILL.md` の該当ブランチからの参照を追加する。
+- 初回実行時にHugging Faceからモデルをダウンロード（EN: ~500MB、JA: ~1GB）
+- 以降はキャッシュからオフラインでも動作する
+- NERモデルは完璧ではなく検出漏れ・誤検出がある。人間のレビューを組み合わせること
+- テキストはローカルでのみ処理され、外部に送信されない

@@ -1,0 +1,24 @@
+[project]
+name = "kuronuri-mcp"
+version = "0.1.0"
+description = "MCP server that exposes kuronuri PII masking to Claude"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "kuronuri>=0.2.0",
+]
+
+[project.scripts]
+kuronuri-mcp = "server:mcp"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[[tool.uv.index]]
+explicit = true
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
