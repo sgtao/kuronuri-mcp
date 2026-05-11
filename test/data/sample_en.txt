@@ -1,0 +1,47 @@
+The following are sample customer support logs.
+
+---
+
+[Ticket #101]
+Date: March 15, 2024
+Agent: Kevin Smith
+Customer: John Doe
+Phone: +1-800-555-0199
+Email: john.doe@example.com
+Address: 123 Main Street, Springfield, IL 62701
+
+Issue:
+John Doe called in regarding a billing discrepancy on his account.
+Callback number: +1-800-555-0199
+Alternate email: johndoe99@gmail.com
+
+Resolution: Refund issued. Confirmation sent to john.doe@example.com.
+
+---
+
+[Ticket #102]
+Date: March 16, 2024
+Agent: Emily Johnson
+Customer: Jane Smith
+Email: jane.smith@corp.org
+Credit Card (last 4): 8765
+API Key: sk-live-abcdefghijklmnopqrstuvwx
+
+Notes:
+Jane Smith requested an API key rotation.
+Old key sk-live-abcdefghijklmnopqrstuvwx has been revoked.
+New key sent to jane.smith@corp.org.
+
+---
+
+[Ticket #103]
+Date: March 17, 2024
+Customer: Robert Brown
+Phone: 555-0142
+Email: r.brown.42@webmail.net
+Address: 456 Oak Avenue, Austin, TX 78701
+
+Notes:
+Robert Brown reported unauthorized access.
+Contact: r.brown.42@webmail.net or 555-0142.
+Address on file: 456 Oak Avenue, Austin TX.
