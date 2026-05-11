@@ -1,6 +1,6 @@
 # kuronuri-mcp
 
-Claude会話内でkuronuriによるPIIマスキングをリアルタイム実行するMCPサーバー＋スキル。
+Claude会話内で[kuronuri](https://github.com/sincekmori/kuronuri) によるPIIマスキングをリアルタイム実行するMCPサーバー＋スキル。
 
 ---
 
