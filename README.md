@@ -118,3 +118,9 @@ claude mcp list
 - 以降はキャッシュからオフラインでも動作する
 - NERモデルは完璧ではなく検出漏れ・誤検出がある。人間のレビューを組み合わせること
 - テキストはローカルでのみ処理され、外部に送信されない
+
+## License
+MIT
+
+This project uses [kuronuri](https://github.com/sincekmori/kuronuri) 
+by Shinsuke Mori (Apache 2.0).
