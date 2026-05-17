@@ -1,91 +1,91 @@
-# kuronuri-mcp-test — 動作確認サンプルプロジェクト
+# kuronuri-mcp-test — Smoke test sample project
 
-kuronuri / kuronuri-mcp の動作を確認するためのサンプル集。
+Sample scripts for verifying kuronuri / kuronuri-mcp behavior.
 
 ---
 
-## 構成
+## Structure
 
 ```
 kuronuri-test/
 ├── data/
-│   ├── sample_ja.txt          ← 日本語サンプル（個人情報入り）
-│   └── sample_en.txt          ← 英語サンプル（個人情報入り）
-├── masked/                    ← 02_file_batch.py の出力先（自動生成）
+│   ├── sample_ja.txt          ← Japanese sample text (contains fictional PII)
+│   └── sample_en.txt          ← English sample text (contains fictional PII)
+├── masked/                    ← Output directory for 02_file_batch.py (auto-created)
 └── scripts/
-    ├── 01_basic.py            ← 基本動作確認（戦略・言語の組み合わせ）
-    ├── 02_file_batch.py       ← ファイル一括マスキング
-    ├── 03_mcp_client.py       ← MCP クライアント直接呼び出し
-    └── 04_claude_code_test.md ← Claude Code での自然言語テスト手順
+    ├── 01_basic.py            ← Basic operation check (strategy × language combinations)
+    ├── 02_file_batch.py       ← Batch file masking
+    ├── 03_mcp_client.py       ← Direct MCP client call
+    └── 04_claude_code_test.md ← Natural language test procedure for Claude Code
 ```
 
 ---
 
-## セットアップ
+## Setup
 
 ```bash
-# kuronuri をインストール（CPU環境）
+# Install kuronuri (CPU environment)
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install kuronuri "mcp[cli]"
 ```
 
 ---
 
-## 実行手順
+## How to run
 
-### Step 1：基本動作確認
+### Step 1: Basic operation check
 
 ```bash
 python scripts/01_basic.py
 ```
 
-戦略（block / label / fixed）と言語（en / ja）の組み合わせを一通り確認できる。
-※ 初回はモデルのダウンロードが走るため数分かかる。
+Runs through all combinations of strategy (block / label / fixed) and language (en / ja).
+Note: The first run downloads the model, which may take a few minutes.
 
 ---
 
-### Step 2：ファイル一括処理
+### Step 2: Batch file processing
 
 ```bash
-# デフォルト（ブロック戦略）
+# Default (block strategy)
 python scripts/02_file_batch.py
 
-# ラベル戦略
+# Label strategy
 python scripts/02_file_batch.py --strategy label
 
-# 言語を明示
+# Explicit language
 python scripts/02_file_batch.py --lang ja --strategy label
 ```
 
-`data/*.txt` を処理して `masked/` に出力する。
+Processes all `data/*.txt` files and writes results to `masked/`.
 
 ---
 
-### Step 3：MCPクライアント直接呼び出し
+### Step 3: MCP client direct call
 
 ```bash
-# server.py のパスを確認してから実行
+# Verify server.py path before running
 python scripts/03_mcp_client.py
 ```
 
-MCP プロトコル経由で `mask_text` / `list_ner_tags` を呼び出す。
-kuronuri-mcp の `server.py` へのパスを `SERVER_PATH` 変数で調整すること。
+Calls `mask_text` / `list_ner_tags` over the MCP protocol.
+Adjust the `SERVER_PATH` variable to point to your `server.py`.
 
 ---
 
-### Step 4：Claude Code での自然言語テスト
+### Step 4: Natural language test in Claude Code
 
-`scripts/04_claude_code_test.md` の手順に従い、Claude Code 上でプロンプトを試す。
+Follow the instructions in `scripts/04_claude_code_test.md` to test with prompts in Claude Code.
 
 ```bash
-# MCP 登録（初回のみ）
+# Register MCP server (first time only)
 claude mcp add kuronuri -- uv run --directory /path/to/kuronuri-mcp python server.py
 ```
 
 ---
 
-## 注意事項
+## Notes
 
-- `data/` 内のサンプルデータはすべて架空の情報です
-- 初回実行時のモデルダウンロード：EN モデル ~500MB、JA モデル ~1GB
-- NER モデルは完璧ではなく検出漏れ・誤検出がある
+- All sample data in `data/` contains entirely fictional information
+- First-run model download: EN model ~500 MB, JA model ~1 GB
+- NER models are not perfect — missed detections and false positives can occur

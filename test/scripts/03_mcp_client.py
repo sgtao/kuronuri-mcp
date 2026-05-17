@@ -1,23 +1,23 @@
 """
-03_mcp_client.py — kuronuri-mcp MCPサーバーの動作確認
+03_mcp_client.py — kuronuri-mcp MCP server smoke test
 
-Claude Code 上で kuronuri-mcp が登録済みかを確認し、
-MCP クライアントとして mask_text / list_ner_tags を呼び出す。
+Verifies that the kuronuri-mcp server is reachable as an MCP client
+and calls mask_text / list_ner_tags directly over the MCP protocol.
 
-前提:
+Prerequisite:
   claude mcp add kuronuri -- uv run --directory /path/to/kuronuri-mcp python server.py
 
-使い方:
+Usage:
   python scripts/03_mcp_client.py
 """
 
 import asyncio
-import json
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
 from pathlib import Path
 
-# kuronuri-mcp の server.py へのパス（環境に合わせて変更）
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+# Path to server.py — adjust to your environment
 SERVER_PATH = Path(__file__).parent.parent.parent / "kuronuri-mcp" / "server.py"
 
 SAMPLE_EN = "Hello, I'm John Doe. My email is john.doe@example.com."
@@ -36,66 +36,66 @@ async def run() -> None:
         async with ClientSession(read, write) as session:
             await session.initialize()
 
-            # ── ツール一覧確認 ────────────────────────────────
+            # ── List available tools ──────────────────────────
             tools = await session.list_tools()
-            print("利用可能なツール:")
+            print("Available tools:")
             for t in tools.tools:
                 print(f"  - {t.name}: {t.description}")
             print()
 
-            # ── list_ner_tags（英語） ─────────────────────────
+            # ── list_ner_tags (English) ───────────────────────
             print(SEP)
             print("▶ list_ner_tags(lang='en')")
             print(SEP)
             result = await session.call_tool("list_ner_tags", {"lang": "en"})
             print(result.content[0].text)
 
-            # ── list_ner_tags（日本語） ───────────────────────
+            # ── list_ner_tags (Japanese) ──────────────────────
             print(SEP)
             print("▶ list_ner_tags(lang='ja')")
             print(SEP)
             result = await session.call_tool("list_ner_tags", {"lang": "ja"})
             print(result.content[0].text)
 
-            # ── mask_text: 英語・ブロック ─────────────────────
+            # ── mask_text: English, block strategy ───────────
             print(SEP)
-            print("▶ mask_text: 英語・block戦略")
+            print("▶ mask_text: English, block strategy")
             print(SEP)
             result = await session.call_tool("mask_text", {
                 "text": SAMPLE_EN,
                 "lang": "en",
                 "strategy": "block",
             })
-            print("入力:", SAMPLE_EN)
-            print("出力:", result.content[0].text)
+            print("Input:", SAMPLE_EN)
+            print("Output:", result.content[0].text)
 
-            # ── mask_text: 日本語・block ──────────────────────
+            # ── mask_text: Japanese, block strategy ───────────
             print(SEP)
-            print("▶ mask_text: 日本語・block戦略")
+            print("▶ mask_text: Japanese, block strategy")
             print(SEP)
             result = await session.call_tool("mask_text", {
                 "text": SAMPLE_JA,
                 "lang": "ja",
                 "strategy": "block",
             })
-            print("入力:", SAMPLE_JA)
-            print("出力:", result.content[0].text)
+            print("Input:", SAMPLE_JA)
+            print("Output:", result.content[0].text)
 
-            # ── mask_text: 日本語・label ──────────────────────
+            # ── mask_text: Japanese, label strategy ───────────
             print(SEP)
-            print("▶ mask_text: 日本語・label戦略")
+            print("▶ mask_text: Japanese, label strategy")
             print(SEP)
             result = await session.call_tool("mask_text", {
                 "text": SAMPLE_JA,
                 "lang": "ja",
                 "strategy": "label",
             })
-            print("入力:", SAMPLE_JA)
-            print("出力:", result.content[0].text)
+            print("Input:", SAMPLE_JA)
+            print("Output:", result.content[0].text)
 
-            # ── mask_text: 人名のみ ───────────────────────────
+            # ── mask_text: person names only ──────────────────
             print(SEP)
-            print("▶ mask_text: 日本語・人名(PER)のみ")
+            print("▶ mask_text: Japanese, PER (person) only")
             print(SEP)
             result = await session.call_tool("mask_text", {
                 "text": SAMPLE_JA,
@@ -103,10 +103,10 @@ async def run() -> None:
                 "strategy": "block",
                 "mask_tags": ["PER"],
             })
-            print("入力:", SAMPLE_JA)
-            print("出力:", result.content[0].text)
+            print("Input:", SAMPLE_JA)
+            print("Output:", result.content[0].text)
 
-    print(f"\n{SEP}\n✅ 完了\n{SEP}")
+    print(f"\n{SEP}\n✅ Done\n{SEP}")
 
 
 if __name__ == "__main__":

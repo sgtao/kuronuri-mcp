@@ -1,16 +1,16 @@
 """
-01_basic.py — kuronuri 基本動作確認
+01_basic.py — kuronuri basic operation check
 
-動作確認項目:
-  1. 英語テキスト・デフォルト（ブロック戦略）
-  2. 日本語テキスト・デフォルト（ブロック戦略）
-  3. ラベル戦略（英語）
-  4. ラベル戦略（日本語）
-  5. 固定文字列戦略
-  6. タグ絞り込み（人名のみ）
+Verified scenarios:
+  1. English text, default strategy (block)
+  2. Japanese text, default strategy (block)
+  3. Label strategy (English)
+  4. Label strategy (Japanese)
+  5. Fixed-string strategy
+  6. Tag filtering (person names only)
 """
 
-from kuronuri import EN_MODEL, JA_MODEL, mask, mask_with_label, mask_with_fixed
+from kuronuri import JA_MODEL, mask, mask_with_fixed, mask_with_label
 
 SEP = "-" * 60
 
@@ -19,36 +19,36 @@ def section(title: str) -> None:
     print(f"\n{SEP}\n▶ {title}\n{SEP}")
 
 
-# ── 1. 英語・ブロック（デフォルト） ──────────────────────────
-section("1. 英語・ブロック戦略（デフォルト）")
+# ── 1. English, block (default) ──────────────────────────────
+section("1. English — block strategy (default)")
 en_text = "Hello, I'm John Doe. My email is john.doe@example.com and my phone is +1-800-555-0199."
-print("入力:", en_text)
-print("出力:", mask(en_text))
+print("Input:", en_text)
+print("Output:", mask(en_text))
 
-# ── 2. 日本語・ブロック ───────────────────────────────────────
-section("2. 日本語・ブロック戦略（デフォルト）")
+# ── 2. Japanese, block ────────────────────────────────────────
+section("2. Japanese — block strategy (default)")
 ja_text = "山田太郎です。メールは yamada.taro@example.co.jp、電話は 090-1234-5678 です。"
-print("入力:", ja_text)
-print("出力:", mask(ja_text, model=JA_MODEL))
+print("Input:", ja_text)
+print("Output:", mask(ja_text, model=JA_MODEL))
 
-# ── 3. 英語・ラベル戦略 ───────────────────────────────────────
-section("3. 英語・ラベル戦略")
-print("入力:", en_text)
-print("出力:", mask(en_text, strategy=mask_with_label))
+# ── 3. English, label strategy ────────────────────────────────
+section("3. English — label strategy")
+print("Input:", en_text)
+print("Output:", mask(en_text, strategy=mask_with_label))
 
-# ── 4. 日本語・ラベル戦略 ─────────────────────────────────────
-section("4. 日本語・ラベル戦略")
-print("入力:", ja_text)
-print("出力:", mask(ja_text, model=JA_MODEL, strategy=mask_with_label))
+# ── 4. Japanese, label strategy ───────────────────────────────
+section("4. Japanese — label strategy")
+print("Input:", ja_text)
+print("Output:", mask(ja_text, model=JA_MODEL, strategy=mask_with_label))
 
-# ── 5. 固定文字列戦略 ─────────────────────────────────────────
-section("5. 固定文字列戦略（*** 5文字）")
-print("入力:", en_text)
-print("出力:", mask(en_text, strategy=mask_with_fixed(char="*", length=5)))
+# ── 5. Fixed-string strategy ──────────────────────────────────
+section("5. Fixed-string strategy (*** 5 chars)")
+print("Input:", en_text)
+print("Output:", mask(en_text, strategy=mask_with_fixed(char="*", length=5)))
 
-# ── 6. タグ絞り込み（人名のみ） ───────────────────────────────
-section("6. タグ絞り込み（日本語・人名 PER のみ）")
-print("入力:", ja_text)
-print("出力:", mask(ja_text, model=JA_MODEL, mask_tags={"PER"}))
+# ── 6. Tag filtering (person names only) ─────────────────────
+section("6. Tag filtering — Japanese, PER (person) only")
+print("Input:", ja_text)
+print("Output:", mask(ja_text, model=JA_MODEL, mask_tags={"PER"}))
 
-print(f"\n{SEP}\n✅ 完了\n{SEP}")
+print(f"\n{SEP}\n✅ Done\n{SEP}")

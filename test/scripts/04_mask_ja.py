@@ -1,17 +1,15 @@
-"""日本語テキストの PII マスクスクリプト。
+"""Japanese text PII masking script.
 
-NER モデル（XLM-RoBERTa）で人名を検出し、
-正規表現でメール・電話番号を補完してマスクする。
+Detects person names with an NER model (XLM-RoBERTa) and supplements
+email addresses and phone numbers with regex before masking.
 """
 
 import argparse
 import re
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from transformers import pipeline
-
 
 MASK_LABELS: dict[str, str] = {
     "PER": "【人名】",
@@ -48,15 +46,16 @@ def _collect_regex_spans(text: str) -> list[Span]:
 
 
 def _merge_spans(ner_spans: list[Span], regex_spans: list[Span]) -> list[Span]:
-    """正規表現スパンを優先しつつ重複を除去して開始位置順に返す。
+    """Merge NER and regex spans, giving priority to regex matches.
 
-    正規表現（EMAIL/PHONE）はモデル誤分類より信頼度が高いため先に確定させる。
+    Regex spans (EMAIL/PHONE) are more reliable than model classification,
+    so they are confirmed first and NER spans that overlap are dropped.
     """
-    # 正規表現スパンを先に確定
+    # Confirm regex spans first
     confirmed: list[Span] = sorted(regex_spans, key=lambda s: s.start)
     merged = list(confirmed)
 
-    # NER スパンは正規表現スパンと重複しない部分のみ追加
+    # Add NER spans only where they do not overlap with regex spans
     for span in sorted(ner_spans, key=lambda s: s.start):
         if any(s.start < span.end and span.start < s.end for s in confirmed):
             continue
@@ -66,14 +65,14 @@ def _merge_spans(ner_spans: list[Span], regex_spans: list[Span]) -> list[Span]:
 
 
 def mask(text: str, ner_pipe) -> str:
-    """テキスト中の PII をマスクして返す。
+    """Mask PII in text and return the result.
 
     Args:
-        text: マスク対象のテキスト。
-        ner_pipe: HuggingFace NER pipeline。
+        text: Input text to mask.
+        ner_pipe: HuggingFace NER pipeline.
 
     Returns:
-        PII をマスクラベルに置換したテキスト。
+        Text with PII replaced by mask labels.
     """
     spans = _merge_spans(_collect_ner_spans(text, ner_pipe), _collect_regex_spans(text))
 
@@ -88,8 +87,8 @@ def mask(text: str, ner_pipe) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="日本語テキストの PII マスク")
-    parser.add_argument("--file", type=Path, help="マスク対象ファイル（省略時はサンプル実行）")
+    parser = argparse.ArgumentParser(description="Japanese text PII masking")
+    parser.add_argument("--file", type=Path, help="File to mask (runs samples if omitted)")
     args = parser.parse_args()
 
     ner_pipe = pipeline(
@@ -110,8 +109,8 @@ def main() -> None:
     ]
 
     for text in samples:
-        print(f"入力: {text}")
-        print(f"出力: {mask(text, ner_pipe)}")
+        print(f"Input:  {text}")
+        print(f"Output: {mask(text, ner_pipe)}")
         print()
 
 
