@@ -1,71 +1,71 @@
 # kuronuri-mcp
 
-Claude会話内で[kuronuri](https://github.com/sincekmori/kuronuri) によるPIIマスキングをリアルタイム実行するMCPサーバー＋スキル。
+An MCP server and skill that runs [kuronuri](https://github.com/sincekmori/kuronuri) PII masking in real time inside Claude conversations.
 
 ---
 
-## ディレクトリ構成
+## Directory Structure
 
 ```
 kuronuri-mcp/
-├── CHANGELOG.md                ← 変更履歴
-├── SKILL.md                    ← Claudeスキル本体（必須）
-├── server.py                   ← MCPサーバー（ツール定義）
-├── pyproject.toml              ← 依存管理
-├── mise.toml                   ← タスクランナー設定
-├── tests/                      ← ユニットテスト
+├── CHANGELOG.md                <- Changelog
+├── SKILL.md                    <- Claude skill definition (required)
+├── server.py                   <- MCP server (tool definitions)
+├── pyproject.toml              <- Dependency management
+├── mise.toml                   <- Task runner configuration
+├── tests/                      <- Unit tests
 ├── references/
-│   └── architecture.md        ← コード設計の詳細解説
+│   └── architecture.md        <- Detailed code design notes
 ├── evals/
-│   └── test-cases.md          ← 動作確認テストケース
-└── README.md                   ← このファイル
+│   └── test-cases.md          <- Functional test cases
+└── README.md                   <- This file
 ```
 
 ---
 
-## セットアップ手順
+## Setup
 
-### 1. 依存インストール
+### 1. Install Dependencies
 
-**pip の場合：**
+**Using pip:**
 
 ```bash
 cd kuronuri-mcp/
 
-# CPU版PyTorchを先に入れる（GPU不要、~200MB）
+# Install CPU-only PyTorch first (no GPU required, ~200 MB)
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install "mcp[cli]" kuronuri
 ```
 
-**uv の場合（推奨）：**
+**Using uv (recommended):**
 
 ```bash
 uv sync
 ```
 
-### 2. 動作確認
+### 2. Verify Installation
 
 ```bash
-# MCPのdev toolで試す
+# Try with the MCP dev tool
 mcp dev server.py
 
-# uv 経由の場合
+# Via uv
 uv run mcp dev server.py
 ```
 
-### 3. Claude Code への登録
+### 3. Register with Claude Code
 
 ```bash
-# プロジェクトローカル
+# Project-local registration
 claude mcp add kuronuri -- python /path/to/kuronuri-mcp/server.py
 
-# 登録確認
+# Confirm registration
 claude mcp list
 ```
 
-### 4. Claude Desktop（claude_mcp_config.json）への登録
+### 4. Register with Claude Desktop
 
-`~/.claude/claude_mcp_config.json` に追記：
+Add the following to `~/.claude/claude_mcp_config.json`:
 
 ```json
 {
@@ -85,89 +85,89 @@ claude mcp list
 
 ---
 
-## 提供ツール
+## Tools
 
 ### `mask_text`
 
-| パラメータ | 型 | デフォルト | 説明 |
+| Parameter | Type | Default | Description |
 |---|---|---|---|
-| `text` | str | 必須 | マスク対象テキスト |
-| `lang` | str | `"en"` | `"en"` または `"ja"` |
+| `text` | str | required | Text to mask |
+| `lang` | str | `"en"` | `"en"` or `"ja"` |
 | `strategy` | str | `"block"` | `"block"` / `"label"` / `"fixed"` |
-| `mask_tags` | list[str] | null | 指定タグのみマスク（nullでデフォルト） |
-| `fixed_char` | str | `"█"` | fixed戦略の置換文字 |
-| `fixed_length` | int | `3` | fixed戦略の文字数 |
+| `mask_tags` | list[str] | null | Tags to mask (null uses model defaults) |
+| `fixed_char` | str | `"█"` | Replacement character for fixed strategy |
+| `fixed_length` | int | `3` | Replacement length for fixed strategy |
 
 ### `list_ner_tags`
 
-| パラメータ | 型 | デフォルト | 説明 |
+| Parameter | Type | Default | Description |
 |---|---|---|---|
-| `lang` | str | `"en"` | `"en"` または `"ja"` |
+| `lang` | str | `"en"` | `"en"` or `"ja"` |
 
 ---
 
-## スキルのモード
+## Skill Modes
 
-| モード | 条件 | 動作 |
+| Mode | Condition | Behavior |
 |---|---|---|
-| リアルタイム実行 | MCPサーバー接続済み | 会話内で即マスク実行 |
-| コード生成 | MCPサーバー未接続 | Python/CLIコード・設計解説を生成 |
+| Real-time execution | MCP server connected | Masks PII inline during conversation |
+| Code generation | MCP server not connected | Generates Python/CLI code and design notes |
 
 ---
 
-## 注意事項
+## Notes
 
-- 初回実行時にHugging Faceからモデルをダウンロード（EN: ~500MB、JA: ~1GB）
-- 以降はキャッシュからオフラインでも動作する
-- NERモデルは完璧ではなく検出漏れ・誤検出がある。人間のレビューを組み合わせること
-- テキストはローカルでのみ処理され、外部に送信されない
+- The first run downloads NER models from Hugging Face (EN: ~500 MB, JA: ~1 GB).
+- Subsequent runs use the local cache and work offline.
+- NER models are not perfect; false negatives and false positives can occur. Always combine with human review.
+- Text is processed locally only and never sent to external services.
 
 ---
 
-## 開発者向け
+## For Developers
 
-### 開発環境のセットアップ
+### Development Setup
 
 ```bash
-# 依存インストール（dev ツール含む）
+# Install all dependencies including dev tools
 uv sync
 ```
 
-### タスク一覧
+### Task Reference
 
-| コマンド | 内容 |
+| Command | Description |
 |---|---|
-| `mise run fix` | ruff によるフォーマット・Lint修正 + ty による型チェック |
-| `mise run test` | ユニットテスト（モデル不要、高速） |
-| `mise run test-cov` | ユニットテスト + カバレッジレポート表示（モデルあり） |
-| `mise run test-all` | Python 3.10〜3.12 全バージョンでテスト（モデルあり） |
+| `mise run fix` | Format and lint with ruff, type-check with ty |
+| `mise run test` | Unit tests without model loading (fast) |
+| `mise run test-cov` | Unit tests with coverage report (model required) |
+| `mise run test-all` | Full test suite across Python 3.10-3.12 (model required) |
 
-### テスト構成
+### Test Structure
 
-`tests/` 以下のテストは2種類に分かれています：
+Tests under `tests/` are split into two categories:
 
-- **通常テスト**（デフォルト）：kuronuriモデルをモック化して実行。高速で CI 向け
-- **モデルテスト**（`--run-model` フラグ）：実際のNERモデルをロードして実行。初回はモデルDLが発生
+- **Standard tests** (default): kuronuri models are mocked. Fast and suitable for CI.
+- **Model tests** (`--run-model` flag): Runs against real NER models. Requires model download on first run.
 
 ```bash
-# 通常テスト
+# Standard tests
 uv run pytest
 
-# モデルテスト（実モデル使用）
+# Model tests (uses real models)
 uv run pytest --run-model
 ```
 
-### push 前チェック
+### Pre-push Checklist
 
 ```bash
 mise run fix
-mise run test
+mise run test-all
 ```
 
 ---
 
-## ライセンス
+## License
 
 Apache-2.0
 
-このプロジェクトは [kuronuri](https://github.com/sincekmori/kuronuri)（作者: Shinsuke Mori、Apache-2.0）を使用しています。
+This project uses [kuronuri](https://github.com/sincekmori/kuronuri) by Shinsuke Mori (Apache-2.0).
