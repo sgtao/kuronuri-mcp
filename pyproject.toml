@@ -49,8 +49,22 @@ target-version = "py310"
 exclude = ["test/scripts/"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP"]
-ignore = []
+select = ["ALL"]
+ignore = [
+    "D",       # pydocstyle — docstring style enforcement
+    "ANN",     # flake8-annotations — type annotation enforcement
+    "COM",     # flake8-commas — trailing comma style
+    "FIX",     # flake8-fixme — TODO/FIXME comments
+    "TD",      # flake8-todos — TODO comment format
+    "PLR0913", # too-many-arguments — mask_text has 6 params by design
+    "PLC0415", # import-outside-toplevel — lazy imports avoid loading ML models at startup
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",   # assert — expected in pytest tests
+    "ARG001", # unused-function-argument — pytest fixtures declared but not used in body
+]
 
 [tool.ty.environment]
 python-version = "3.10"

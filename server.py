@@ -22,7 +22,8 @@ def mask_text(
         strategy: Masking strategy ("block" / "label" / "fixed").
         mask_tags: List of NER tags to mask. None uses the model default.
         fixed_char: Replacement character for the fixed strategy (default "█").
-        fixed_length: Number of replacement characters for the fixed strategy (default 3).
+        fixed_length: Number of replacement characters for the fixed strategy
+            (default 3).
 
     Returns:
         Masked text.
@@ -53,7 +54,7 @@ def mask_text(
 
 @mcp.tool()
 def list_ner_tags(lang: str = "en") -> str:
-    """Return a Markdown table of NER tags and default mask targets for the given language.
+    """Return a Markdown table of NER tags and default mask targets for the given lang.
 
     Args:
         lang: Language code ("en" or "ja").
