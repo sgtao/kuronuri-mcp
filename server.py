@@ -1,4 +1,4 @@
-"""kuronuri MCP Server — Claude会話内でPIIマスキングを実行するサーバー."""
+"""kuronuri MCP Server — PII masking tools exposed to Claude via MCP."""
 
 from mcp.server.fastmcp import FastMCP
 
@@ -14,18 +14,18 @@ def mask_text(
     fixed_char: str = "█",
     fixed_length: int = 3,
 ) -> str:
-    """テキスト内のPII（個人情報）をkuronuriでマスキングして返す。
+    """Mask PII in the given text using kuronuri and return the result.
 
     Args:
-        text: マスク対象のテキスト
-        lang: 言語 ("en" または "ja")
-        strategy: マスキング戦略 ("block" / "label" / "fixed")
-        mask_tags: マスク対象タグのリスト（Noneでモデルのデフォルト）
-        fixed_char: fixed戦略の置換文字 (デフォルト "█")
-        fixed_length: fixed戦略の文字数 (デフォルト 3)
+        text: Input text to mask.
+        lang: Language code ("en" or "ja").
+        strategy: Masking strategy ("block" / "label" / "fixed").
+        mask_tags: List of NER tags to mask. None uses the model default.
+        fixed_char: Replacement character for the fixed strategy (default "█").
+        fixed_length: Number of replacement characters for the fixed strategy (default 3).
 
     Returns:
-        マスキング済みテキスト
+        Masked text.
     """
     from kuronuri import (
         EN_MODEL,
@@ -53,21 +53,21 @@ def mask_text(
 
 @mcp.tool()
 def list_ner_tags(lang: str = "en") -> str:
-    """指定言語モデルのNERタグ一覧とデフォルトマスク対象をMarkdown表で返す。
+    """Return a Markdown table of NER tags and default mask targets for the given language.
 
     Args:
-        lang: 言語 ("en" または "ja")
+        lang: Language code ("en" or "ja").
 
     Returns:
-        タグ情報のMarkdown表
+        Markdown table of tag information.
     """
     from kuronuri import EN_MODEL, JA_MODEL
 
     model = JA_MODEL if lang == "ja" else EN_MODEL
 
     lines = [
-        f"## {lang.upper()} モデル: `{model.model_name}`\n",
-        "| タグ | ラベル | デフォルトマスク |",
+        f"## {lang.upper()} Model: `{model.model_name}`\n",
+        "| Tag | Label | Default Mask |",
         "|---|---|---|",
     ]
     for tag, label in model.tag_labels.items():

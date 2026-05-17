@@ -91,7 +91,7 @@ def test_list_ner_tags_output_is_markdown_table(mock_kuronuri_models: dict) -> N
 
     result = list_ner_tags(lang="en")
 
-    assert "| タグ |" in result
+    assert "| Tag |" in result
     assert "|---|" in result
 
 
