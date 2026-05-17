@@ -1,46 +1,46 @@
-# kuronuri アーキテクチャ解説リファレンス
+# kuronuri Architecture Reference
 
-## 1. 全体設計図
+## 1. Overall Design
 
 ```
-外部（ユーザー）
+User (external)
     │
-    ├── Python API（__init__.py がファサード）
-    │       └── mask() / NERModel / Strategy関数群
+    ├── Python API (__init__.py acts as facade)
+    │       └── mask() / NERModel / strategy functions
     │
-    └── CLI（_cli.py がアダプター層）
-            └── 同じ mask() を呼び出す
+    └── CLI (_cli.py acts as adapter layer)
+            └── calls the same mask()
 
-【データフロー】
-生テキスト
-  → _get_pipeline(model)  ← @cache でシングルトン保持
-  → NERエンティティリスト取得
-  → mask_tags でフィルタリング
-  → start降順ソート（offset管理のため）
-  → strategy(entity, tag_labels) で文字列置換
-  → マスク済みテキスト
+[Data Flow]
+Raw text
+  → _get_pipeline(model)  ← singleton held by @cache
+  → obtain NER entity list
+  → filter by mask_tags
+  → sort by start descending (for offset management)
+  → strategy(entity, tag_labels) replaces each span
+  → masked text
 ```
 
 ---
 
-## 2. ストラテジーパターンの詳細
+## 2. Strategy Pattern in Detail
 
-`MaskStrategy = Callable[[dict, dict[str, str]], str]` という型エイリアスがパターンの核。
+`MaskStrategy = Callable[[dict, dict[str, str]], str]` is the core of the pattern.
 
 ```python
-# 3種のビルトイン戦略の比較
-mask_with_block  → entity["end"] - entity["start"] 文字分の「█」
-mask_with_label  → tag_labels.get(tag, tag) から "<Person>" を生成
-mask_with_fixed  → クロージャでchar・lengthを保持するファクトリ
+# Comparison of 3 built-in strategies
+mask_with_block  → "█" repeated for entity["end"] - entity["start"] characters
+mask_with_label  → builds "<Person>" from tag_labels.get(tag, tag)
+mask_with_fixed  → factory function that holds char and length via closure
 ```
 
-`mask_with_fixed` だけファクトリ関数になっている理由：
-パラメータ（char, length）を戦略関数のシグネチャ外で渡す必要があるため、
-クロージャで事前束縛する。
+Why `mask_with_fixed` is a factory function:
+Parameters (char, length) must be passed outside the strategy function signature,
+so they are pre-bound via closure.
 
 ---
 
-## 3. @cache によるパイプラインキャッシュ
+## 3. Pipeline Caching with @cache
 
 ```python
 @cache
@@ -48,14 +48,14 @@ def _get_pipeline(model: NERModel) -> Any:
     return hf_pipeline("token-classification", model=model.model_name, ...)
 ```
 
-`NERModel` が `@dataclass(unsafe_hash=True)` なのはこのため。
-- `model_name` と `aggregation_strategy` のみがハッシュキー
-- `tag_labels`（dict）は `hash=False` で除外
-- 同名モデルでラベルだけ変えても同一パイプラインを再利用
+`NERModel` uses `@dataclass(unsafe_hash=True)` for this reason:
+- Only `model_name` and `aggregation_strategy` serve as hash keys
+- `tag_labels` (dict) is excluded with `hash=False`
+- Changing only the labels for the same model name reuses the same pipeline
 
 ---
 
-## 4. 後方置換アルゴリズム
+## 4. Reverse Replacement Algorithm
 
 ```python
 entities_to_mask = sorted(..., key=lambda e: e["start"], reverse=True)
@@ -64,48 +64,48 @@ for entity in entities_to_mask:
     result = result[:entity["start"]] + strategy(...) + result[entity["end"]:]
 ```
 
-前から置換すると置換後の文字列長変化でoffsetがズレる。
-後ろから処理することで既処理部分のインデックスに影響しない。
+Replacing from the front causes index drift because the replacement string length differs.
+Processing from the back avoids affecting the indices of already-processed positions.
 
 ---
 
-## 5. CLIのエンコーディング処理
+## 5. CLI Encoding Handling
 
 ```python
 _BOM_ENCODINGS: list[tuple[bytes, str]] = [
-    (codecs.BOM_UTF32_LE, "utf-32-le"),  # 4バイト（長い）
+    (codecs.BOM_UTF32_LE, "utf-32-le"),  # 4 bytes (longer)
     (codecs.BOM_UTF32_BE, "utf-32-be"),
-    (codecs.BOM_UTF16_LE, "utf-16-le"),  # 2バイト（短い）
+    (codecs.BOM_UTF16_LE, "utf-16-le"),  # 2 bytes (shorter)
     (codecs.BOM_UTF16_BE, "utf-16-be"),
     (codecs.BOM_UTF8, "utf-8-sig"),
 ]
 ```
 
-長いBOMを先にチェックする理由：
-UTF-32 LE BOM（FF FE 00 00）はUTF-16 LE BOM（FF FE）を先頭に含むため、
-短い方を先に照合すると誤判定が起きる。
+Why longer BOMs are checked first:
+The UTF-32 LE BOM (FF FE 00 00) starts with the UTF-16 LE BOM (FF FE),
+so checking the shorter one first would cause a false match.
 
 ---
 
-## 6. ファサードパターン（__init__.py）
+## 6. Facade Pattern (__init__.py)
 
 ```python
 from kuronuri._masker import (mask, NERModel, ...)
 __all__ = ["mask", "NERModel", ...]
 ```
 
-`_masker.py` の先頭の `_` は「内部実装」を示す慣習。
-将来ファイルを分割・リネームしても `__init__.py` だけ修正すればOK。
+The leading `_` in `_masker.py` is a convention indicating internal implementation.
+If the file is split or renamed in the future, only `__init__.py` needs to be updated.
 
 ---
 
-## 7. 設計原則まとめ
+## 7. Design Principles Summary
 
-| 原則 | 実装箇所 |
+| Principle | Implementation |
 |---|---|
-| ファサードパターン | `__init__.py` |
-| ストラテジーパターン | `MaskStrategy` 型エイリアス + 3戦略関数 |
-| キャッシュ（シングルトン的） | `@cache` + `NERModel` のハッシュ設計 |
-| アダプターパターン | `_cli.py` |
-| 関心の分離 | CLI（I/O・エンコーディング）とコア（NER・置換）の完全分離 |
-| 単一責任の原則 | 各ファイルが1つの責務を担う |
+| Facade pattern | `__init__.py` |
+| Strategy pattern | `MaskStrategy` type alias + 3 strategy functions |
+| Cache (singleton-like) | `@cache` + `NERModel` hash design |
+| Adapter pattern | `_cli.py` |
+| Separation of concerns | CLI (I/O, encoding) and core (NER, replacement) fully separated |
+| Single responsibility | Each file has exactly one responsibility |
