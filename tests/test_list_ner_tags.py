@@ -103,7 +103,7 @@ def test_list_ner_tags_en_real_model() -> None:
 
     assert isinstance(result, str)
     assert "## EN" in result
-    assert "| タグ |" in result
+    assert "| Tag |" in result
 
 
 @pytest.mark.model
