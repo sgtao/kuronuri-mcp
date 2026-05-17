@@ -12,6 +12,12 @@ run = [
   "uv run pytest",
 ]
 
+[tasks.test-cov]
+description = "Run the test suite with coverage report."
+run = [
+  "uv run pytest --run-model --cov=server --cov-report=term-missing",
+]
+
 [tasks.test-all]
 description = "Run the test suite across Python 3.10–3.12."
 run = [
