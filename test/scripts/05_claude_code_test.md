@@ -1,4 +1,4 @@
-# 04_claude_code_test.md — Claude Code での自然言語テスト手順
+# 05_claude_code_test.md — Claude Code での自然言語テスト手順
 
 kuronuri-mcp を Claude Code に登録した後、
 以下のプロンプトを順に試して動作を確認する。

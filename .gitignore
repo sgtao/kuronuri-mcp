@@ -232,3 +232,4 @@ mcp_debug.log
 # kuronuri の playground ファイル
 playground.py
 .temp/
+docs
