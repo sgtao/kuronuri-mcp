@@ -2,6 +2,7 @@
 name = "kuronuri-mcp"
 version = "0.1.0"
 description = "MCP server that exposes kuronuri PII masking to Claude"
+license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=1.0.0",
