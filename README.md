@@ -8,13 +8,16 @@ Claude会話内で[kuronuri](https://github.com/sincekmori/kuronuri) によるPI
 
 ```
 kuronuri-mcp/
+├── CHANGELOG.md                ← 変更履歴
 ├── SKILL.md                    ← Claudeスキル本体（必須）
 ├── server.py                   ← MCPサーバー（ツール定義）
 ├── pyproject.toml              ← 依存管理
+├── mise.toml                   ← タスクランナー設定
+├── tests/                      ← ユニットテスト
 ├── references/
 │   └── architecture.md        ← コード設計の詳細解説
 ├── evals/
-│   └── test-cases.md          ← 動作確認テストケース（R系3件＋C系9件）
+│   └── test-cases.md          ← 動作確認テストケース
 └── README.md                   ← このファイル
 ```
 
@@ -24,6 +27,8 @@ kuronuri-mcp/
 
 ### 1. 依存インストール
 
+**pip の場合：**
+
 ```bash
 cd kuronuri-mcp/
 
@@ -32,11 +37,10 @@ pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install "mcp[cli]" kuronuri
 ```
 
-uv の場合：
+**uv の場合（推奨）：**
 
 ```bash
-uv add torch  # pyproject.toml の pytorch-cpu index を参照
-uv add "mcp[cli]" kuronuri
+uv sync
 ```
 
 ### 2. 動作確認
@@ -45,8 +49,7 @@ uv add "mcp[cli]" kuronuri
 # MCPのdev toolで試す
 mcp dev server.py
 
-# uv 経由の場合（venv 不要）
-uv sync
+# uv 経由の場合
 uv run mcp dev server.py
 ```
 
@@ -119,8 +122,52 @@ claude mcp list
 - NERモデルは完璧ではなく検出漏れ・誤検出がある。人間のレビューを組み合わせること
 - テキストはローカルでのみ処理され、外部に送信されない
 
-## License
-MIT
+---
 
-This project uses [kuronuri](https://github.com/sincekmori/kuronuri) 
-by Shinsuke Mori (Apache 2.0).
+## 開発者向け
+
+### 開発環境のセットアップ
+
+```bash
+# 依存インストール（dev ツール含む）
+uv sync
+```
+
+### タスク一覧
+
+| コマンド | 内容 |
+|---|---|
+| `mise run fix` | ruff によるフォーマット・Lint修正 + ty による型チェック |
+| `mise run test` | ユニットテスト（モデル不要、高速） |
+| `mise run test-cov` | ユニットテスト + カバレッジレポート表示（モデルあり） |
+| `mise run test-all` | Python 3.10〜3.12 全バージョンでテスト（モデルあり） |
+
+### テスト構成
+
+`tests/` 以下のテストは2種類に分かれています：
+
+- **通常テスト**（デフォルト）：kuronuriモデルをモック化して実行。高速で CI 向け
+- **モデルテスト**（`--run-model` フラグ）：実際のNERモデルをロードして実行。初回はモデルDLが発生
+
+```bash
+# 通常テスト
+uv run pytest
+
+# モデルテスト（実モデル使用）
+uv run pytest --run-model
+```
+
+### push 前チェック
+
+```bash
+mise run fix
+mise run test
+```
+
+---
+
+## ライセンス
+
+Apache-2.0
+
+このプロジェクトは [kuronuri](https://github.com/sincekmori/kuronuri)（作者: Shinsuke Mori、Apache-2.0）を使用しています。
